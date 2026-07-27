@@ -57,7 +57,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - ayoub.aitalla@uit.ac.ma
+          - jixo145@gmail.com
         notify:
           success: true
           failure: true
@@ -108,7 +108,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - ayoub.aitalla@uit.ac.ma
+          - jixo145@gmail.com
         notify:
           success: true
           failure: true
@@ -161,7 +161,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - ayoub.aitalla@uit.ac.ma
+          - jixo145@gmail.com
         notify:
           success: true
           failure: true
@@ -194,7 +194,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - ayoub.aitalla@uit.ac.ma
+          - jixo145@gmail.com
         notify:
           success: true
           failure: true
@@ -234,7 +234,7 @@ workflows:
     publishing:
       email:
         recipients:
-          - ayoub.aitalla@uit.ac.ma
+          - jixo145@gmail.com
         notify:
           success: true
           failure: true
