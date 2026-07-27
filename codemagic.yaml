@@ -1,3 +1,5 @@
+default: flutter-build-android
+
 workflows:
   flutter-build-android:
     name: Flutter Build Android APK & AAB
@@ -12,6 +14,8 @@ workflows:
         - push
         - pull_request
       branch_patterns:
+        - pattern: main
+          include: true
         - pattern: develop
           include: true
     scripts:
