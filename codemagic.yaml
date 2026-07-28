@@ -26,18 +26,18 @@ workflows:
       - name: Get Flutter dependencies
         script: |
           cd alazkar
-          flutter pub get
+          $HOME/programs/flutter/bin/flutter pub get
       
       - name: Analyze code quality
         script: |
           cd alazkar
-          flutter analyze
+          $HOME/programs/flutter/bin/flutter analyze
       
       - name: Run unit tests
         script: |
           cd alazkar
           if [ -d "test" ]; then
-            flutter test
+            $HOME/programs/flutter/bin/flutter test
           else
             echo "No test directory found, skipping tests."
           fi
@@ -45,12 +45,12 @@ workflows:
       - name: Build APK (Release)
         script: |
           cd alazkar
-          flutter build apk --release --split-per-abi
+          $HOME/programs/flutter/bin/flutter build apk --release --split-per-abi
       
       - name: Build AAB (Release)
         script: |
           cd alazkar
-          flutter build appbundle --release
+          $HOME/programs/flutter/bin/flutter build appbundle --release
     
     artifacts:
       - alazkar/build/app/outputs/flutter-apk/app-*.apk
@@ -88,19 +88,19 @@ workflows:
       - name: Get Flutter dependencies
         script: |
           cd alazkar
-          flutter pub get
+          $HOME/programs/flutter/bin/flutter pub get
       
       - name: Build APK optimized for HyperOS
         script: |
           cd alazkar
-          flutter build apk --release \
+          $HOME/programs/flutter/bin/flutter build apk --release \
             --dart-define=ENABLE_NOTIFICATION_OPTIMIZATIONS=true \
             --split-per-abi
       
       - name: Build AAB optimized for HyperOS
         script: |
           cd alazkar
-          flutter build appbundle --release \
+          $HOME/programs/flutter/bin/flutter build appbundle --release \
             --dart-define=ENABLE_NOTIFICATION_OPTIMIZATIONS=true
     
     artifacts:
@@ -135,18 +135,18 @@ workflows:
       - name: Get Flutter dependencies
         script: |
           cd alazkar
-          flutter pub get
+          $HOME/programs/flutter/bin/flutter pub get
       
       - name: Analyze code quality
         script: |
           cd alazkar
-          flutter analyze
+          $HOME/programs/flutter/bin/flutter analyze
       
       - name: Run unit tests
         script: |
           cd alazkar
           if [ -d "test" ]; then
-            flutter test
+            $HOME/programs/flutter/bin/flutter test
           else
             echo "No test directory found, skipping tests."
           fi
@@ -154,7 +154,7 @@ workflows:
       - name: Build iOS IPA
         script: |
           cd alazkar
-          flutter build ipa --release \
+          $HOME/programs/flutter/bin/flutter build ipa --release \
             --export-options-template=ios/Runner.xcodeproj/project.pbxproj
     
     artifacts:
@@ -183,12 +183,12 @@ workflows:
       - name: Get Flutter dependencies
         script: |
           cd alazkar
-          flutter pub get
+          $HOME/programs/flutter/bin/flutter pub get
       
       - name: Build Web Release
         script: |
           cd alazkar
-          flutter build web --release --dart-define=FLUTTER_WEB_USE_SKIA=true
+          $HOME/programs/flutter/bin/flutter build web --release --dart-define=FLUTTER_WEB_USE_SKIA=true
     
     artifacts:
       - alazkar/build/web/**
@@ -217,17 +217,17 @@ workflows:
       - name: Get Flutter dependencies
         script: |
           cd alazkar
-          flutter pub get
+          $HOME/programs/flutter/bin/flutter pub get
       
       - name: Build APK (Debug)
         script: |
           cd alazkar
-          flutter build apk --debug
+          $HOME/programs/flutter/bin/flutter build apk --debug
       
       - name: Build AAB (Debug)
         script: |
           cd alazkar
-          flutter build appbundle --debug
+          $HOME/programs/flutter/bin/flutter build appbundle --debug
     
     artifacts:
       - alazkar/build/app/outputs/flutter-apk/app-debug.apk
