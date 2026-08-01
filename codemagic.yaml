@@ -1,38 +1,45 @@
 workflows:
   android-release:
     name: Android Release
+    max_build_duration: 120
     environment:
       flutter: stable
+      vars:
+        BUILD_MODE: release
     scripts:
       - name: Prepare keystore
         script: |
-          # Exit on error
+          #!/bin/bash
           set -euo pipefail
           echo "Preparing Android keystore..."
-          # Use the helper already present in the repo (tools/prepare_keystore.sh)
+          # Prefer the repo helper if present
           if [ -x tools/prepare_keystore.sh ]; then
             chmod +x tools/prepare_keystore.sh
             ./tools/prepare_keystore.sh
           else
-            # Fallback: decode KEYSTORE_BASE64 inline
+            # Fallback inline decoding (expects secrets in Codemagic UI)
             if [ -z "${KEYSTORE_BASE64:-}" ]; then
               echo "ERROR: KEYSTORE_BASE64 is not set"
               exit 1
             fi
-            echo "$KEYSTORE_BASE64" | base64 --decode > android/my-release-key.jks
+            # Use printf to write files to avoid heredoc/indentation problems
+            printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/my-release-key.jks
             chmod 600 android/my-release-key.jks
-            cat > android/key.properties <<EOF
-            storePassword=$KEYSTORE_PASSWORD
-            keyPassword=$KEY_PASSWORD
-            keyAlias=$KEY_ALIAS
-            storeFile=my-release-key.jks
-            EOF
+            {
+              printf 'storePassword=%s\n' "$KEYSTORE_PASSWORD"
+              printf 'keyPassword=%s\n' "$KEY_PASSWORD"
+              printf 'keyAlias=%s\n' "$KEY_ALIAS"
+              printf 'storeFile=%s\n' "my-release-key.jks"
+            } > android/key.properties
           fi
           echo "Wrote android/my-release-key.jks and android/key.properties"
-      - name: Get dependencies
+
+      - name: Install dependencies
         script: |
+          # Install Flutter dependencies and warm up pub-cache
           flutter pub get
-      - name: Scan for shim issues
+
+      - name: Shim scan (pub-cache)
         script: |
           if [ -x tools/scan_shim_issues.sh ]; then
             chmod +x tools/scan_shim_issues.sh
@@ -40,9 +47,27 @@ workflows:
             echo "--- shim_scan_report.txt ---"
             cat shim_scan_report.txt || true
           else
-            echo "No scan_shim_issues.sh found"
+            echo "No tools/scan_shim_issues.sh found"
           fi
+
       - name: Build APK (release)
         script: |
           flutter clean
           flutter build apk --release
+
+      - name: Build AAB (release)
+        script: |
+          # Build Android App Bundle (optional, non-fatal)
+          set +e
+          flutter build appbundle --release
+          set -e
+
+    artifacts:
+      - build/app/outputs/flutter-apk/*.apk
+      - build/app/outputs/bundle/release/*.aab
+      - shim_scan_report.txt
+
+    cache:
+      paths:
+        - "$HOME/.pub-cache"
+        - "$HOME/.gradle"

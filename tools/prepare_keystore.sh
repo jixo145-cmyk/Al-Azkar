@@ -18,14 +18,16 @@ echo "Preparing Android keystore and key.properties..."
 
 mkdir -p android
 
-echo "$KEYSTORE_BASE64" | base64 --decode > android/my-release-key.jks
+# Decode base64. Using printf to avoid issues with leading/trailing newlines.
+printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/my-release-key.jks
 chmod 600 android/my-release-key.jks
 
-cat > android/key.properties <<EOF
-storePassword=$KEYSTORE_PASSWORD
-keyPassword=$KEY_PASSWORD
-keyAlias=$KEY_ALIAS
-storeFile=my-release-key.jks
-EOF
+# Write key.properties reliably without a heredoc (avoids indentation/heredoc EOF issues in CI)
+{
+  printf 'storePassword=%s\n' "$KEYSTORE_PASSWORD"
+  printf 'keyPassword=%s\n' "$KEY_PASSWORD"
+  printf 'keyAlias=%s\n' "$KEY_ALIAS"
+  printf 'storeFile=%s\n' "my-release-key.jks"
+} > android/key.properties
 
 echo "Wrote android/my-release-key.jks and android/key.properties"
