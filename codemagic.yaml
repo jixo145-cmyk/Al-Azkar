@@ -1,242 +1,48 @@
-default: flutter-build-android
-
 workflows:
-  flutter-build-android:
-    name: Flutter Build Android APK & AAB
-    max_build_duration: 120
+  android-release:
+    name: Android Release
     environment:
-      flutter: 3.32.0
-      xcode: latest
-      cocoapods: default
-      java: 17
-    triggering:
-      events:
-        - push
-        - pull_request
-      branch_patterns:
-        - pattern: main
-          include: true
-        - pattern: develop
-          include: true
+      flutter: stable
     scripts:
-      - name: Set up local.properties
+      - name: Prepare keystore
         script: |
-          echo "flutter.sdk=$HOME/programs/flutter" > alazkar/android/local.properties
-      
-      - name: Get Flutter dependencies
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter pub get
-      
-      - name: Analyze code quality
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter analyze
-      
-      - name: Run unit tests
-        script: |
-          cd alazkar
-          if [ -d "test" ]; then
-            $HOME/programs/flutter/bin/flutter test
+          # Exit on error
+          set -euo pipefail
+          echo "Preparing Android keystore..."
+          # Use the helper already present in the repo (tools/prepare_keystore.sh)
+          if [ -x tools/prepare_keystore.sh ]; then
+            chmod +x tools/prepare_keystore.sh
+            ./tools/prepare_keystore.sh
           else
-            echo "No test directory found, skipping tests."
+            # Fallback: decode KEYSTORE_BASE64 inline
+            if [ -z "${KEYSTORE_BASE64:-}" ]; then
+              echo "ERROR: KEYSTORE_BASE64 is not set"
+              exit 1
+            fi
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/my-release-key.jks
+            chmod 600 android/my-release-key.jks
+            cat > android/key.properties <<EOF
+            storePassword=$KEYSTORE_PASSWORD
+            keyPassword=$KEY_PASSWORD
+            keyAlias=$KEY_ALIAS
+            storeFile=my-release-key.jks
+            EOF
           fi
-      
-      - name: Build APK (Release)
+          echo "Wrote android/my-release-key.jks and android/key.properties"
+      - name: Get dependencies
         script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter build apk --release --split-per-abi
-      
-      - name: Build AAB (Release)
+          flutter pub get
+      - name: Scan for shim issues
         script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter build appbundle --release
-    
-    artifacts:
-      - alazkar/build/app/outputs/flutter-apk/app-*.apk
-      - alazkar/build/app/outputs/bundle/release/app-release.aab
-    
-    publishing:
-      email:
-        recipients:
-          - jixo145@gmail.com
-        notify:
-          success: true
-          failure: true
-      slack:
-        channel: '#al-azkar-builds'
-        notify_on_build_start: true
-
-  flutter-build-android-huawei:
-    name: Flutter Build Android for Huawei (HyperOS)
-    max_build_duration: 120
-    environment:
-      flutter: 3.32.0
-      java: 17
-    triggering:
-      events:
-        - push
-        - tag
-      branch_patterns:
-        - pattern: main
-          include: true
-    scripts:
-      - name: Set up local.properties
-        script: |
-          echo "flutter.sdk=$HOME/programs/flutter" > alazkar/android/local.properties
-      
-      - name: Get Flutter dependencies
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter pub get
-      
-      - name: Build APK optimized for HyperOS
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter build apk --release \
-            --dart-define=ENABLE_NOTIFICATION_OPTIMIZATIONS=true \
-            --split-per-abi
-      
-      - name: Build AAB optimized for HyperOS
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter build appbundle --release \
-            --dart-define=ENABLE_NOTIFICATION_OPTIMIZATIONS=true
-    
-    artifacts:
-      - alazkar/build/app/outputs/flutter-apk/app-*.apk
-      - alazkar/build/app/outputs/bundle/release/app-release.aab
-    
-    publishing:
-      email:
-        recipients:
-          - jixo145@gmail.com
-        notify:
-          success: true
-          failure: true
-
-  flutter-build-ios:
-    name: Flutter Build iOS IPA
-    max_build_duration: 120
-    environment:
-      flutter: 3.32.0
-      xcode: latest
-      cocoapods: default
-    triggering:
-      events:
-        - push
-        - pull_request
-      branch_patterns:
-        - pattern: main
-          include: true
-        - pattern: develop
-          include: true
-    scripts:
-      - name: Get Flutter dependencies
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter pub get
-      
-      - name: Analyze code quality
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter analyze
-      
-      - name: Run unit tests
-        script: |
-          cd alazkar
-          if [ -d "test" ]; then
-            $HOME/programs/flutter/bin/flutter test
+          if [ -x tools/scan_shim_issues.sh ]; then
+            chmod +x tools/scan_shim_issues.sh
+            ./tools/scan_shim_issues.sh
+            echo "--- shim_scan_report.txt ---"
+            cat shim_scan_report.txt || true
           else
-            echo "No test directory found, skipping tests."
+            echo "No scan_shim_issues.sh found"
           fi
-      
-      - name: Build iOS IPA
+      - name: Build APK (release)
         script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter build ipa --release \
-            --export-options-template=ios/Runner.xcodeproj/project.pbxproj
-    
-    artifacts:
-      - alazkar/build/ios/ipa/*.ipa
-    
-    publishing:
-      email:
-        recipients:
-          - jixo145@gmail.com
-        notify:
-          success: true
-          failure: true
-
-  flutter-build-web:
-    name: Flutter Build Web
-    max_build_duration: 60
-    environment:
-      flutter: 3.32.0
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
-    scripts:
-      - name: Get Flutter dependencies
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter pub get
-      
-      - name: Build Web Release
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter build web --release --dart-define=FLUTTER_WEB_USE_SKIA=true
-    
-    artifacts:
-      - alazkar/build/web/**
-    
-    publishing:
-      email:
-        recipients:
-          - jixo145@gmail.com
-        notify:
-          success: true
-          failure: true
-
-  flutter-beta-build:
-    name: Flutter Beta Build (Testing)
-    max_build_duration: 120
-    environment:
-      flutter: 3.32.0
-      java: 17
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: develop
-          include: true
-    scripts:
-      - name: Get Flutter dependencies
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter pub get
-      
-      - name: Build APK (Debug)
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter build apk --debug
-      
-      - name: Build AAB (Debug)
-        script: |
-          cd alazkar
-          $HOME/programs/flutter/bin/flutter build appbundle --debug
-    
-    artifacts:
-      - alazkar/build/app/outputs/flutter-apk/app-debug.apk
-      - alazkar/build/app/outputs/bundle/debug/app-debug.aab
-    
-    publishing:
-      email:
-        recipients:
-          - jixo145@gmail.com
-        notify:
-          success: true
-          failure: true
+          flutter clean
+          flutter build apk --release
