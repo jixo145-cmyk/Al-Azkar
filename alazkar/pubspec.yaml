@@ -12,7 +12,8 @@ environment:
 dependencies:
   android_alarm_manager_plus:
     git:
-      url: https://github.com/fluttercommunity/android_alarm_manager_plus.git
+      url: https://github.com/fluttercommunity/plus_plugins.git
+      path: packages/android_alarm_manager_plus
       ref: main
   auto_size_text: ^3.0.0
   bloc: ^9.0.1
