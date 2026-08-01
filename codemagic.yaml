@@ -15,9 +15,20 @@ workflows:
           chmod +x tools/prepare_keystore.sh
           ./tools/prepare_keystore.sh
 
+      - name: Debug project root
+        script: |
+          #!/bin/bash
+          set -euo pipefail
+          echo "Debug: current working directory: $(pwd)"
+          echo "Debug: listing top-level files and directories..."
+          ls -la
+          echo "Searching for pubspec.yaml (depth 3)..."
+          find . -maxdepth 3 -name pubspec.yaml -print || true
+
       - name: Install dependencies
         script: |
-          # Install Flutter dependencies and warm up pub-cache
+          #!/bin/bash
+          set -euo pipefail
           flutter pub get
 
       - name: Shim scan (pub-cache)
