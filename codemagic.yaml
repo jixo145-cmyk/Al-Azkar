@@ -15,24 +15,22 @@ workflows:
           chmod +x tools/prepare_keystore.sh
           ./tools/prepare_keystore.sh
 
-      - name: Debug project root
-        script: |
-          #!/bin/bash
-          set -euo pipefail
-          echo "Debug: current working directory: $(pwd)"
-          echo "Debug: listing top-level files and directories..."
-          ls -la
-          echo "Searching for pubspec.yaml (depth 3)..."
-          find . -maxdepth 3 -name pubspec.yaml -print || true
-
       - name: Install dependencies
         script: |
           #!/bin/bash
           set -euo pipefail
+          PROJECT_DIR="$(dirname "$(find . -maxdepth 4 -name pubspec.yaml -print | head -n1 || true)")"
+          if [ -z "$PROJECT_DIR" ] || [ "$PROJECT_DIR" = "." ]; then
+            PROJECT_DIR="."
+          fi
+          echo "Using project dir: $PROJECT_DIR"
+          cd "$PROJECT_DIR"
           flutter pub get
 
       - name: Shim scan (pub-cache)
         script: |
+          #!/bin/bash
+          set -euo pipefail
           if [ -x tools/scan_shim_issues.sh ]; then
             chmod +x tools/scan_shim_issues.sh
             ./tools/scan_shim_issues.sh
@@ -44,12 +42,25 @@ workflows:
 
       - name: Build APK (release)
         script: |
+          #!/bin/bash
+          set -euo pipefail
+          PROJECT_DIR="$(dirname "$(find . -maxdepth 4 -name pubspec.yaml -print | head -n1 || true)")"
+          if [ -z "$PROJECT_DIR" ] || [ "$PROJECT_DIR" = "." ]; then
+            PROJECT_DIR="."
+          fi
+          cd "$PROJECT_DIR"
           flutter clean
           flutter build apk --release
 
       - name: Build AAB (release)
         script: |
-          # Build Android App Bundle (optional, non-fatal)
+          #!/bin/bash
+          set -euo pipefail
+          PROJECT_DIR="$(dirname "$(find . -maxdepth 4 -name pubspec.yaml -print | head -n1 || true)")"
+          if [ -z "$PROJECT_DIR" ] || [ "$PROJECT_DIR" = "." ]; then
+            PROJECT_DIR="."
+          fi
+          cd "$PROJECT_DIR"
           set +e
           flutter build appbundle --release
           set -e
