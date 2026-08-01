@@ -66,8 +66,3 @@ workflows:
       - build/app/outputs/flutter-apk/*.apk
       - build/app/outputs/bundle/release/*.aab
       - shim_scan_report.txt
-
-    cache:
-      paths:
-        - "$HOME/.pub-cache"
-        - "$HOME/.gradle"
