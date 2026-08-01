@@ -12,27 +12,8 @@ workflows:
           #!/bin/bash
           set -euo pipefail
           echo "Preparing Android keystore..."
-          # Prefer the repo helper if present
-          if [ -x tools/prepare_keystore.sh ]; then
-            chmod +x tools/prepare_keystore.sh
-            ./tools/prepare_keystore.sh
-          else
-            # Fallback inline decoding (expects secrets in Codemagic UI)
-            if [ -z "${KEYSTORE_BASE64:-}" ]; then
-              echo "ERROR: KEYSTORE_BASE64 is not set"
-              exit 1
-            fi
-            # Use printf to write files to avoid heredoc/indentation problems
-            printf '%s' "$KEYSTORE_BASE64" | base64 --decode > android/my-release-key.jks
-            chmod 600 android/my-release-key.jks
-            {
-              printf 'storePassword=%s\n' "$KEYSTORE_PASSWORD"
-              printf 'keyPassword=%s\n' "$KEY_PASSWORD"
-              printf 'keyAlias=%s\n' "$KEY_ALIAS"
-              printf 'storeFile=%s\n' "my-release-key.jks"
-            } > android/key.properties
-          fi
-          echo "Wrote android/my-release-key.jks and android/key.properties"
+          chmod +x tools/prepare_keystore.sh
+          ./tools/prepare_keystore.sh
 
       - name: Install dependencies
         script: |
